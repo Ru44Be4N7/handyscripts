@@ -1,52 +1,33 @@
 #!MC 1410
 
-$!VarSet |numDigits| = ""
-$!VarSet |FileBase| = ""
-$!VarSet |increment| = ""
+$!VarSet |Prefix_normal| = "wing_"
+$!VarSet |Sufix_normal| = "_vol"
+$!VarSet |Prefix_failed| = "failed_mesh_wing_"
+$!VarSet |Sufix_failed| = ""
 $!VarSet |numberoffiles| = ""
 
-$!PROMPTFORTEXTSTRING |numDigits|
-    INSTRUCTIONS = "Number of digits in filename"
-$!PROMPTFORTEXTSTRING |FileBase|
-    INSTRUCTIONS = "Base filename"
-$!PROMPTFORTEXTSTRING |increment|
-    INSTRUCTIONS = "Increment of file numbers"
 $!PROMPTFORTEXTSTRING |numberoffiles|
     INSTRUCTIONS = "Number of total files"
 
 
-
 $!LOOP |numberoffiles|
-$!VARSET |add| = (|LOOP|*|increment|)
-$!VARSET |n| = "|add|"
+  $!VARSET |n| = "|LOOP|"
 
-# format file numbers to correct digits
-
-$!If |numDigits| == 0
-   $!VarSet |finalN| = "|n|"
-$!ElseIf |numDigits| == 1
-   $!VarSet |finalN| = "|n|" # no use in formatting here
-$!ElseIf |numDigits| == 2
-  $!VarSet |finalN| = "|n%02d|"
-$!ElseIf |numDigits| == 3
+  # format file numbers to correct digits
   $!VarSet |finalN| = "|n%03d|"
-$!ElseIf |numDigits| == 4
-  $!VarSet |finalN| = "|n%04d|"
-$!ElseIf |numDigits| == 5
-  $!VarSet |finalN| = "|n%05d|"
-$!ElseIf |numDigits| == 6
-  $!VarSet |finalN| = "|n%06d|"
-$!Endif
 
-$!PAUSE "|macrofilepath|/|FileBase||finalN|.plt"
+  #Checks to see if the file exists
+  $!EXTENDEDCOMMAND
+  COMMANDPROCESSORID = "extendmcr"
+  Command = 'QUERY.FILEEXISTS "|macrofilepath|/|Prefix_normal||finalN||Sufix_normal|.cgns" "exists_normal"'
+  Command = 'QUERY.FILEEXISTS "|macrofilepath|/|Prefix_failed||finalN||Sufix_failed|.cgns" "exists_failed"'
 
-#Checks to see if the file exists
-$!EXTENDEDCOMMAND
-COMMANDPROCESSORID = "extendmcr"
-Command = 'QUERY.FILEEXISTS "|macrofilepath|/|FileBase||finalN|.plt" "exists"'
-$!IF "|exists|" == "YES"
-    $!READDATASET "|macrofilepath|/|FileBase||finalN|.plt"
-      READDATAOPTION = APPEND 
-$!ENDIF
+  $!IF "|exists_normal|" == "YES"
+      $!READDATASET "|macrofilepath|/|Prefix_normal||finalN||Sufix_normal|.cgns"
+        READDATAOPTION = APPEND 
+  $!ELSEIF "|exists_failed|" == "YES"
+      $!READDATASET "|macrofilepath|/|Prefix_failed||finalN||Sufix_failed|.cgns"
+        READDATAOPTION = APPEND 
+  $!ENDIF
 
 $!ENDLOOP
